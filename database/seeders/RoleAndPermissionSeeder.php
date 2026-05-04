@@ -54,7 +54,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'payments.view', 'payments.record', 'reports.view', 'audit.view',
             ],
             RoleName::Vendor->value => [
-                'vendors.view', 'vendors.update',
+                'vendors.view', 'vendors.create', 'vendors.update',
                 'vendor_centers.view', 'vendor_centers.create', 'vendor_centers.update',
                 'vendor_kyc.view', 'vendor_kyc.update',
                 'trainers.view', 'trainers.create', 'trainers.update',

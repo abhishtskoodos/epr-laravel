@@ -13,8 +13,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(OtpChannel::class, function () {
             return match ((string) config('services.otp.channel', 'log')) {
-                'msg91' => new Msg91OtpChannel(),
-                default => new LogOtpChannel(),
+                'msg91' => new Msg91OtpChannel,
+                default => new LogOtpChannel,
             };
         });
     }

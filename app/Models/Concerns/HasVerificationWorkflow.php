@@ -38,7 +38,7 @@ trait HasVerificationWorkflow
 
         if (! in_array($toStatus, $allowed, true)) {
             throw new InvalidArgumentException(
-                "Illegal transition for ".class_basename(static::class)." #{$this->getKey()}: {$from} → {$toStatus}"
+                'Illegal transition for '.class_basename(static::class)." #{$this->getKey()}: {$from} → {$toStatus}"
             );
         }
 
