@@ -1,12 +1,12 @@
 # EPR System (Laravel + MySQL)
 
-End-to-end Employment & Training Partner Response platform — vendor lifecycle, candidate enrollment, scheme logic, invoice/payment workflow — built on Laravel 13 with embedded RBAC, audit trail, verification workflow, scheme logic engine, data validation, and compliance controls.
+End-to-end Employment & Training Partner Response platform — vendor lifecycle, candidate enrollment, scheme logic, invoice/payment workflow — built on Laravel 12 with embedded RBAC, audit trail, verification workflow, scheme logic engine, data validation, and compliance controls.
 
 ## Stack
 
 | Layer | Choice |
 |---|---|
-| Framework | Laravel 13 (PHP 8.3) |
+| Framework | Laravel 12 (PHP 8.2+) |
 | DB | MySQL (local + prod); SQLite for tests |
 | Admin UI | Filament 5 |
 | RBAC | spatie/laravel-permission |
