@@ -1,58 +1,100 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# EPR System (Laravel + MySQL)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+End-to-end Employment & Training Partner Response platform — vendor lifecycle, candidate enrollment, scheme logic, invoice/payment workflow — built on Laravel 13 with embedded RBAC, audit trail, verification workflow, scheme logic engine, data validation, and compliance controls.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Layer | Choice |
+|---|---|
+| Framework | Laravel 13 (PHP 8.3) |
+| DB | MySQL (local + prod); SQLite for tests |
+| Admin UI | Filament 5 |
+| RBAC | spatie/laravel-permission |
+| Audit | owen-it/laravel-auditing + an immutable `verifications` table |
+| Auth | Sanctum tokens (API) + Filament session (admin) + OTP login |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Quick start (local)
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/abhishtskoodos/epr-laravel.git
+cd epr-laravel
+composer install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite           # or configure MySQL in .env
+php artisan migrate:fresh --seed         # creates 22 tables + roles/permissions + default users + a sample scheme
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Default users (seeded):
+- admin@epr.test / `password`  (role `admin`)
+- finance@epr.test / `password` (role `finance`)
+- inspector@epr.test / `password` (role `inspector`)
 
-## Contributing
+Filament admin: http://localhost:8000/admin
+API base: http://localhost:8000/api/v1
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+OTP login (development):
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/otp/request \
+     -H 'Content-Type: application/json' \
+     -d '{"phone":"9999999999"}'
+# Then read the 6-digit code from storage/logs/laravel.log
+curl -X POST http://localhost:8000/api/v1/auth/otp/verify \
+     -H 'Content-Type: application/json' \
+     -d '{"phone":"9999999999","code":"<code-from-log>"}'
+```
 
-## Code of Conduct
+## Documentation
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- [`docs/01-database-design.md`](docs/01-database-design.md) — ERD, every column, every index
+- [`docs/02-api-design.md`](docs/02-api-design.md) — full API surface (75 routes), sample requests/responses
+- [`docs/03-controls-and-compliance.md`](docs/03-controls-and-compliance.md) — maps each compliance control to its implementation file
 
-## Security Vulnerabilities
+## Compliance controls (six)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| # | Control | Where |
+|---|---|---|
+| 1 | RBAC | `app/Enums/RoleName.php`, `database/seeders/RoleAndPermissionSeeder.php`, route middleware `permission:*`, Filament policies |
+| 2 | Audit Trail | `OwenIt\Auditing\Auditable` on every model + immutable `verifications` table |
+| 3 | Verification Workflow | `app/Models/Concerns/HasVerificationWorkflow.php` — same trait drives Vendor / Trainer / Candidate / Center / Document / Invoice |
+| 4 | Scheme Logic Engine | `app/Services/SchemeLogicEngine.php` — eligibility, status progression, payable milestones |
+| 5 | Data Validation & Dedup | DB unique constraints (PAN/GST/Aadhaar token/invoice no/enrollment) + `app/Http/Requests/*` |
+| 6 | Compliance Layer | `app/Support/Aadhaar.php` (tokenization, masking), `app/Models/VendorKyc.php` (encrypted bank account), private disk + signed URLs for documents |
 
-## License
+## OTP channel
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The OTP service is pluggable via `App\Services\Otp\OtpChannel`. Default is `LogOtpChannel` (logs the code to `storage/logs/laravel.log`). To wire MSG91, set in `.env`:
+
+```env
+OTP_CHANNEL=msg91
+MSG91_AUTH_KEY=...
+MSG91_TEMPLATE_ID=...
+```
+
+Twilio / other providers: implement `OtpChannel` and bind it in `AppServiceProvider`.
+
+## Tests
+
+```bash
+php artisan test
+```
+
+Covers OTP flow, vendor verification workflow, illegal-transition rejection, Aadhaar tokenization (no raw column, dedupe via SHA-256 token), and the Scheme Logic Engine (age / education rules).
+
+## Dev notes
+
+- Status transitions are guarded — illegal transitions throw `InvalidArgumentException`.
+- Rejecting / suspending requires `remarks` (enforced in the trait).
+- Raw Aadhaar enters via `Candidate::aadhaar` virtual setter and is dropped immediately; only `aadhaar_token` (SHA-256(salt|aadhaar)) and `aadhaar_last4` are stored.
+- Bank account numbers are encrypted at rest via Laravel `Crypt` with a `_last4` column for display.
+- Invoice double-billing is impossible at the DB level: `invoice_items` has a unique `(candidate_enrollment_id, scheme_payment_milestone_id)` constraint.
+
+## Roadmap (post-MVP)
+
+- Vendor / Trainer / Candidate Filament panels (separate from `/admin`) with auto-filtered ownership scopes
+- File uploads via Filament SpatieMediaLibrary integration
+- Real OTP integration (MSG91 / Twilio)
+- Bulk candidate import (CSV) UI
+- Reporting dashboards with date-range MIS
+- Scheme builder UI (drag-and-drop rule + milestone editor)
