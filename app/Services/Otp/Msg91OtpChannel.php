@@ -18,7 +18,7 @@ class Msg91OtpChannel implements OtpChannel
 
         if ($authKey === '' || $templateId === '') {
             Log::warning('[OTP] MSG91 not configured — falling back to log channel.', compact('phone', 'purpose'));
-            (new LogOtpChannel())->send($phone, $code, $purpose);
+            (new LogOtpChannel)->send($phone, $code, $purpose);
 
             return;
         }

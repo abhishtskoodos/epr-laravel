@@ -18,6 +18,7 @@ enum CandidateStatus: string
 
     /**
      * Linear progression. Cannot skip stages.
+     *
      * @return array<string, string[]>
      */
     public static function transitions(): array

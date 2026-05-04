@@ -9,9 +9,7 @@ use RuntimeException;
 
 class OtpService
 {
-    public function __construct(private readonly OtpChannel $channel)
-    {
-    }
+    public function __construct(private readonly OtpChannel $channel) {}
 
     /**
      * Issue a new OTP, invalidating prior unconsumed codes for the same (phone, purpose).
